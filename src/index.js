@@ -75,5 +75,6 @@ async function cron(env, sendMsg) {
   return message;
 }
 }
+cron(env, True)
 }
 };
