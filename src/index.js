@@ -28,4 +28,52 @@ export default {
 		await KV.put(page, count);
 		return new Response("OK", { status: 200 });
 	},
+async cron(env, ctx){
+async function cron(env, sendMsg) {
+  console.log("Cron func is running...");
+  const KV = env.KV;
+  const webhookURL = env.url;
+  var repos = [];
+
+  const list = await KV.list();
+  console.log("Key list aquired");
+  var total = 0;
+  for (const { name, expiration } of list.keys) {
+    console.log("Getting value for " + name);
+    const value = await KV.get(name);
+    if (name == "total" | name == undefined | name == "undefined") {
+      console.log("Invalid Repo, skipping");
+    } else {
+      repos.push({ name: name, count: parseInt(value) });
+      total += parseInt(value);
+    }
+  }
+  repos.sort((a, b) => b.count - a.count); // Sort repos by count in descending order
+  let currentDate = new Date();
+
+  var message = "# Downloads as of " + currentDate.toUTCString() + "\n\n" + repos.map(repo => `Repo: ${repo.name}, Count: ${repo.count}\n`).join("");
+  var message = message + "\n\nTotal downloads: " + total;
+  console.log("Message generated. Sending to Discord...");
+  console.log(message);
+
+  if (sendMsg == false) {
+  await fetch(webhookURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content: message,
+    }),
+  })
+    .then((response) => console.log(response))
+    .catch((error) => console.error(error));
+  console.log("Message sent to Discord");
+  return "Complete! Message sent.";
+} else {
+  console.log("Returning mesage");
+  return message;
+}
+}
+}
 };
