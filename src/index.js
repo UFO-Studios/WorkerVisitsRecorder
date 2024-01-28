@@ -8,8 +8,24 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+//FORMAT:
+//stats.thealiendoctor.com?page=/ufo-studios.html
+
 export default {
 	async fetch(request, env, ctx) {
-		return new Response('Hello World!');
+		let url = request.url;
+		let KV = env.KV;
+		console.log("Handling request for: " + url);
+		let page = url.split("?page=")[1];
+		if (page == undefined) {
+			return new Response("No page specified", { status: 400 });
+		}
+		let count = await KV.get(page);
+		if (count == null) {
+			count = 0;
+		}
+		count++;
+		await KV.put(page, count);
+		return new Response("OK", { status: 200 });
 	},
 };
